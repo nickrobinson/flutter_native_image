@@ -27,6 +27,35 @@
     if ([@"getPlatformVersion" isEqualToString:call.method]) {
         result([@"iOS " stringByAppendingString:[[UIDevice currentDevice] systemVersion]]);
     }
+    else if ([@"compressImageBytes" isEqualToString:call.method]){
+        NSDictionary* arguments = call.arguments;
+        FlutterStandardTypedData *byteData = arguments[@"bytes"];
+        uint8_t* imageBytes = (uint8_t*)[[byteData data] bytes];
+        
+        CVPixelBufferRef pxBuffer = NULL;
+        CVReturn status = CVPixelBufferCreateWithBytes(kCFAllocatorDefault, 1280, 720, kCVPixelFormatType_32BGRA, (void *)imageBytes, 2880, NULL, NULL, NULL, &pxBuffer);
+        
+        if (kCVReturnSuccess != status) {
+            NSLog(@"create pixel buffer from UIImage failed!");
+        }
+        
+        CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pxBuffer];
+        
+        CIContext *temporaryContext = [CIContext contextWithOptions:nil];
+        CGImageRef cgImage =
+        [temporaryContext createCGImage:ciImage
+                               fromRect:CGRectMake(0, 0, CVPixelBufferGetWidth(pxBuffer),
+                                                   CVPixelBufferGetHeight(pxBuffer))];
+
+        UIImage *image = [UIImage imageWithCGImage:cgImage];
+//        NSString *logMsg = [NSString stringWithFormat:@"Image Width: %1.2f, Image Height: %1.2f",
+//                             image.size.width, image.size.height];
+//        NSLog(logMsg);
+        NSData *jpgData = UIImageJPEGRepresentation(image, 0.3);
+        NSString *base64Jpg =[jpgData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
+        result(base64Jpg);
+        return;
+    }
     else if ([@"compressImage" isEqualToString:call.method]) {
         _arguments = call.arguments;
         

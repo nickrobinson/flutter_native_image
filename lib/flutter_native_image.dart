@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
+
 
 import 'package:flutter/services.dart';
 
@@ -22,6 +24,14 @@ class FlutterNativeImage {
     });
 
     return new File(file);
+  }
+
+  static Future<String> compressImageBytes(Uint8List bytes) async {
+    var b64JpegData = await _channel.invokeMethod("compressImageBytes", {
+      'bytes': bytes
+    });
+
+    return b64JpegData;
   }
 
   static Future<ImageProperties> getImageProperties(String fileName) async {
